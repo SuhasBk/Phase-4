@@ -66,3 +66,48 @@ HAVING
 ORDER BY
     TotalAds DESC
 FETCH FIRST 3 ROWS ONLY;
+
+-- 4) Get the total number of listens across different combinations of region, podcast format and genre with subtotals and grand totals for each.
+
+SELECT
+    Region,
+    Podcast_format,
+    Genre,
+    COUNT(*) AS ListenCount
+FROM
+    S24_S003_T7_LISTENS_TO L
+JOIN
+    S24_S003_T7_EPISODE E ON L.EpisodeID = E.EpisodeID AND L.PodcastID = E.PodcastID
+JOIN
+    S24_S003_T7_PODCAST P ON L.PodcastID = P.PodcastID
+JOIN
+    S24_S003_T7_PERSON PR ON L.UPID = PR.PID
+GROUP BY
+    CUBE(Region, Podcast_format, Genre);
+
+
+-- 5)
+
+SELECT
+    Per.Lname + ', ' + Per.Fname AS ArtistName,
+    Per.Region AS UserRegion,
+    P.Name AS PodcastName,
+    COUNT(L.UPID) AS TotalListens,
+    SUM(E.Likes) AS TotalLikes,
+    SUM(E.Dislikes) AS TotalDislikes
+FROM
+    S24_S003_T7_LISTENS_TO L
+JOIN
+    S24_S003_T7_EPISODE E ON L.EpisodeID = E.EpisodeID AND L.PodcastID = E.PodcastID
+JOIN
+    S24_S003_T7_PODCAST P ON L.PodcastID = P.PodcastID
+JOIN
+    S24_S003_T7_ARTIST AR ON E.APID = AR.APID
+JOIN
+    S24_S003_T7_USER U ON L.UPID = U.UPID
+JOIN
+    S24_S003_T7_PERSON Per ON Per.PID = U.UPID AND Per.PID = AR.APID
+GROUP BY
+    ROLLUP(Per.Lname, Per.Fname, Per.Region, P.Name)
+ORDER BY
+    Per.Lname, Per.Fname, Per.Region, P.Name;

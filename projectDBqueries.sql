@@ -67,6 +67,7 @@ ORDER BY
     TotalAds DESC
 FETCH FIRST 3 ROWS ONLY;
 
+
 -- 4) Get the total number of listens across different combinations of region, podcast format and genre with subtotals and grand totals for each.
 
 SELECT
@@ -86,11 +87,11 @@ GROUP BY
     CUBE(Region, Podcast_format, Genre);
 
 
--- 5)
+-- 5) Get the user names, their region, podcast name, total number of listens, total likes and dislikes across artists, user region and podcasts
 
 SELECT
-    Per.Lname + ', ' + Per.Fname AS ArtistName,
-    Per.Region AS UserRegion,
+    artist_details.Lname || ', ' || artist_details.Fname AS ArtistName,
+    user_details.Region AS UserRegion,
     P.Name AS PodcastName,
     COUNT(L.UPID) AS TotalListens,
     SUM(E.Likes) AS TotalLikes,
@@ -104,10 +105,10 @@ JOIN
 JOIN
     S24_S003_T7_ARTIST AR ON E.APID = AR.APID
 JOIN
-    S24_S003_T7_USER U ON L.UPID = U.UPID
+    S24_S003_T7_PERSON artist_details ON artist_details.PID = AR.APID
 JOIN
-    S24_S003_T7_PERSON Per ON Per.PID = U.UPID AND Per.PID = AR.APID
+    S24_S003_T7_PERSON user_details ON user_details.PID = L.UPID
 GROUP BY
-    ROLLUP(Per.Lname, Per.Fname, Per.Region, P.Name)
+    ROLLUP(artist_details.Lname, artist_details.Fname, user_details.Region, P.Name)
 ORDER BY
-    Per.Lname, Per.Fname, Per.Region, P.Name;
+    artist_details.Lname, artist_details.Fname, user_details.Region, P.Name;

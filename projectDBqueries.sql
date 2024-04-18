@@ -54,9 +54,9 @@ JOIN S24_S003_T7_GENRE G ON P.GID = G.GID
 GROUP BY CUBE(PR.Region, E.Episode_format, G.Name);
 
 
--- 5) Get the user names, their region, podcast name, total number of listens, total likes and dislikes across artists, user region and podcasts
+-- 5) Get the user names, their region, podcast name, total number of listens, total likes and dislikes including totals and subtotals for each of them.
 
-SELECT user_details.Lname || ', ' || user_details.Fname AS ArtistName,
+SELECT user_details.Lname AS UserName,
        user_details.Region AS UserRegion,
        P.Name AS PodcastName,
        COUNT(L.UPID) AS TotalListens,
@@ -67,8 +67,8 @@ JOIN S24_S003_T7_EPISODE E ON L.EpisodeID = E.EpisodeID AND L.PodcastID = E.Podc
 JOIN S24_S003_T7_PODCAST P ON L.PodcastID = P.PodcastID
 JOIN S24_S003_T7_ARTIST AR ON E.APID = AR.APID
 JOIN S24_S003_T7_PERSON user_details ON user_details.PID = L.UPID
-GROUP BY ROLLUP(user_details.Lname, user_details.Fname, user_details.Region, P.Name)
-ORDER BY user_details.Lname, user_details.Fname, user_details.Region, P.Name;
+GROUP BY ROLLUP(user_details.Lname, user_details.Region, P.Name)
+ORDER BY user_details.Lname, user_details.Region, P.Name;
 
 
 -- 6) Get the advertisers whose ads appear in every episode of every podcast

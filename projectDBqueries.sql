@@ -74,23 +74,18 @@ ORDER BY user_details.Lname, user_details.Fname, user_details.Region, P.Name;
 -- 6) Get the advertisers whose ads appear in every episode of every podcast
 -- (Division operation)
 
-select adv.* from S24_S003_T7_ADS ad, S24_S003_T7_ADVERTISER adv
-where ad.AdvertiserID = adv.AdvertiserID
-and (ad.adID, ad.AdvertiserID) in (
-SELECT d.AdID, d.AdvertiserID
-FROM S24_S003_T7_ADS d
+SELECT adv.name, adv.revenue
+FROM S24_S003_T7_ADVERTISER adv
 WHERE NOT EXISTS (
     SELECT e.EpisodeID, e.PodcastID
     FROM S24_S003_T7_EPISODE e
     WHERE NOT EXISTS (
-        SELECT AdID
+        SELECT 1
         FROM S24_S003_T7_DISPLAYS ds
-        WHERE ds.EpisodeID = e.EpisodeID
-          AND ds.PodcastID = e.PodcastID
-          AND ds.AdID = d.AdID
-          AND ds.AdvertiserID = d.AdvertiserID
+        WHERE ds.PodcastID = e.PodcastID
+          AND ds.AdvertiserID = adv.AdvertiserID
     )
-));
+);
 
 -- 7) Within each genre, calculate the ranking of episodes based on the number of likes it has recieved.
 

@@ -27,9 +27,9 @@ HAVING COUNT(e.Episode_format) >= 2
 ORDER BY VideoCount DESC;
 
 
--- 3) Get the top 3 advertisers and the total number of ads posted by them which have no more than 5 ads across all episodes and whose total revenue exceeds 5000.
+-- 3) Get the top 3 advertisers and the total number of ads posted by them which have no more than 5 ads across all episodes and whose revenue exceeds 5000.
 
-SELECT adv.Name as AdvertiserName, COUNT(ad.AdID) AS TotalAds
+SELECT adv.AdvertiserID, adv.Name as AdvertiserName, sum(adv.revenue) as total_revenue, COUNT(ad.AdID) AS TotalAds
 FROM S24_S003_T7_ADVERTISER adv
 JOIN S24_S003_T7_ADS ad ON ad.AdvertiserID = adv.AdvertiserID
 JOIN S24_S003_T7_DISPLAYS d ON d.AdID = ad.AdID AND d.AdvertiserID = adv.AdvertiserID
@@ -56,7 +56,7 @@ GROUP BY CUBE(PR.Region, E.Episode_format, G.Name);
 
 -- 5) Get the user names, their region, podcast name, total number of listens, total likes and dislikes across artists, user region and podcasts
 
-SELECT artist_details.Lname || ', ' || artist_details.Fname AS ArtistName,
+SELECT user_details.Lname || ', ' || user_details.Fname AS ArtistName,
        user_details.Region AS UserRegion,
        P.Name AS PodcastName,
        COUNT(L.UPID) AS TotalListens,
@@ -66,10 +66,9 @@ FROM S24_S003_T7_LISTENS_TO L
 JOIN S24_S003_T7_EPISODE E ON L.EpisodeID = E.EpisodeID AND L.PodcastID = E.PodcastID
 JOIN S24_S003_T7_PODCAST P ON L.PodcastID = P.PodcastID
 JOIN S24_S003_T7_ARTIST AR ON E.APID = AR.APID
-JOIN S24_S003_T7_PERSON artist_details ON artist_details.PID = AR.APID
 JOIN S24_S003_T7_PERSON user_details ON user_details.PID = L.UPID
-GROUP BY ROLLUP(artist_details.Lname, artist_details.Fname, user_details.Region, P.Name)
-ORDER BY artist_details.Lname, artist_details.Fname, user_details.Region, P.Name;
+GROUP BY ROLLUP(user_details.Lname, user_details.Fname, user_details.Region, P.Name)
+ORDER BY user_details.Lname, user_details.Fname, user_details.Region, P.Name;
 
 
 -- 6) Get the advertisers whose ads appear in every episode of every podcast

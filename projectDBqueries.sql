@@ -1,117 +1,75 @@
 -- 1) Get the podcast ID, name, subscribers, genre and total views of podcasts belonging to the Technology genre which have at least 10000 total views.
 
-SELECT
-    p.PodcastID,
-    p.Name AS PodcastName,
-    p.Subscribers,
-    g.Name AS GenreName,
-    SUM(e.Views) AS TotalViews
-FROM
-    S24_S003_T7_PODCAST p
-JOIN
-    S24_S003_T7_EPISODE e ON p.PodcastID = e.PodcastID
-JOIN
-    S24_S003_T7_GENRE g ON p.GID = g.GID
-WHERE
-    g.Name = 'Technology'
-GROUP BY
-    p.PodcastID,
-    p.Name,
-    p.Subscribers,
-    g.Name
-HAVING
-    SUM(e.Views) >= 10000;
+SELECT p.PodcastID,
+       p.Name AS PodcastName,
+       p.Subscribers,
+       g.Name AS GenreName,
+       SUM(e.Views) AS TotalViews
+FROM S24_S003_T7_PODCAST p
+JOIN S24_S003_T7_EPISODE e ON p.PodcastID = e.PodcastID
+JOIN S24_S003_T7_GENRE g ON p.GID = g.GID
+WHERE g.Name = 'Technology'
+GROUP BY p.PodcastID, p.Name, p.Subscribers, g.Name
+HAVING SUM(e.Views) >= 10000;
 
 
 -- 2) Get podcast names and genres that have at least 50 video episodes.
 
-SELECT
-    p.Name AS PodcastName,
-    g.Name AS GenreName,
-    COUNT(e.Episode_format) AS VideoCount
-FROM
-    S24_S003_T7_PODCAST p
-JOIN
-    S24_S003_T7_EPISODE e ON p.PodcastID = e.PodcastID
-JOIN
-    S24_S003_T7_GENRE g ON p.GID = g.GID
-WHERE
-    UPPER(e.Episode_format) LIKE '%VIDEO%'
-GROUP BY
-    p.Name,
-    g.Name
-HAVING
-    COUNT(e.Episode_format) >= 50
-ORDER BY VideoCount desc;
+SELECT p.Name AS PodcastName,
+       g.Name AS GenreName,
+       COUNT(e.Episode_format) AS VideoCount
+FROM S24_S003_T7_PODCAST p
+JOIN S24_S003_T7_EPISODE e ON p.PodcastID = e.PodcastID
+JOIN S24_S003_T7_GENRE g ON p.GID = g.GID
+WHERE UPPER(e.Episode_format) LIKE '%VIDEO%'
+GROUP BY p.Name, g.Name
+HAVING COUNT(e.Episode_format) >= 50
+ORDER BY VideoCount DESC;
 
 
 -- 3) Get the top 3 advertisers and the total number of ads posted by them which have no more than 5 ads across all episodes and whose total revenue exceeds 5000.
 
-SELECT
-    adv.Name,
-    COUNT(ad.AdID) TotalAds
-FROM
-    S24_S003_T7_ADVERTISER adv
-JOIN
-    S24_S003_T7_ADS ad ON ad.AdvertiserID = adv.AdvertiserID
-JOIN
-    S24_S003_T7_DISPLAYS d ON d.AdID = ad.AdID AND d.AdvertiserID = adv.AdvertiserID
-WHERE
-    adv.revenue > 5000
-GROUP BY
-    adv.Name,
-    adv.AdvertiserID
-HAVING
-    COUNT(ad.adID) <= 5
-ORDER BY
-    TotalAds DESC
+SELECT adv.Name, COUNT(ad.AdID) AS TotalAds
+FROM S24_S003_T7_ADVERTISER adv
+JOIN S24_S003_T7_ADS ad ON ad.AdvertiserID = adv.AdvertiserID
+JOIN S24_S003_T7_DISPLAYS d ON d.AdID = ad.AdID AND d.AdvertiserID = adv.AdvertiserID
+WHERE adv.revenue > 5000
+GROUP BY adv.Name, adv.AdvertiserID
+HAVING COUNT(ad.AdID) <= 5
+ORDER BY TotalAds DESC
 FETCH FIRST 3 ROWS ONLY;
 
 
 -- 4) Get the total number of listens across different combinations of region, podcast format and genre with subtotals and grand totals for each.
 
-SELECT
-    Region,
-    Podcast_format,
-    Genre,
-    COUNT(*) AS ListenCount
-FROM
-    S24_S003_T7_LISTENS_TO L
-JOIN
-    S24_S003_T7_EPISODE E ON L.EpisodeID = E.EpisodeID AND L.PodcastID = E.PodcastID
-JOIN
-    S24_S003_T7_PODCAST P ON L.PodcastID = P.PodcastID
-JOIN
-    S24_S003_T7_PERSON PR ON L.UPID = PR.PID
-GROUP BY
-    CUBE(Region, Podcast_format, Genre);
+SELECT PR.Region,
+       E.Episode_format AS Podcast_format,
+       G.Name AS Genre,
+       COUNT(*) AS ListenCount
+FROM S24_S003_T7_LISTENS_TO L
+JOIN S24_S003_T7_EPISODE E ON L.EpisodeID = E.EpisodeID AND L.PodcastID = E.PodcastID
+JOIN S24_S003_T7_PODCAST P ON L.PodcastID = P.PodcastID
+JOIN S24_S003_T7_PERSON PR ON L.UPID = PR.PID
+JOIN S24_S003_T7_GENRE G ON P.GID = G.GID
+GROUP BY CUBE(PR.Region, E.Episode_format, G.Name);
 
 
 -- 5) Get the user names, their region, podcast name, total number of listens, total likes and dislikes across artists, user region and podcasts
 
-SELECT
-    artist_details.Lname || ', ' || artist_details.Fname AS ArtistName,
-    user_details.Region AS UserRegion,
-    P.Name AS PodcastName,
-    COUNT(L.UPID) AS TotalListens,
-    SUM(E.Likes) AS TotalLikes,
-    SUM(E.Dislikes) AS TotalDislikes
-FROM
-    S24_S003_T7_LISTENS_TO L
-JOIN
-    S24_S003_T7_EPISODE E ON L.EpisodeID = E.EpisodeID AND L.PodcastID = E.PodcastID
-JOIN
-    S24_S003_T7_PODCAST P ON L.PodcastID = P.PodcastID
-JOIN
-    S24_S003_T7_ARTIST AR ON E.APID = AR.APID
-JOIN
-    S24_S003_T7_PERSON artist_details ON artist_details.PID = AR.APID
-JOIN
-    S24_S003_T7_PERSON user_details ON user_details.PID = L.UPID
-GROUP BY
-    ROLLUP(artist_details.Lname, artist_details.Fname, user_details.Region, P.Name)
-ORDER BY
-    artist_details.Lname, artist_details.Fname, user_details.Region, P.Name;
+SELECT artist_details.Lname || ', ' || artist_details.Fname AS ArtistName,
+       user_details.Region AS UserRegion,
+       P.Name AS PodcastName,
+       COUNT(L.UPID) AS TotalListens,
+       SUM(E.Likes) AS TotalLikes,
+       SUM(E.Dislikes) AS TotalDislikes
+FROM S24_S003_T7_LISTENS_TO L
+JOIN S24_S003_T7_EPISODE E ON L.EpisodeID = E.EpisodeID AND L.PodcastID = E.PodcastID
+JOIN S24_S003_T7_PODCAST P ON L.PodcastID = P.PodcastID
+JOIN S24_S003_T7_ARTIST AR ON E.APID = AR.APID
+JOIN S24_S003_T7_PERSON artist_details ON artist_details.PID = AR.APID
+JOIN S24_S003_T7_PERSON user_details ON user_details.PID = L.UPID
+GROUP BY ROLLUP(artist_details.Lname, artist_details.Fname, user_details.Region, P.Name)
+ORDER BY artist_details.Lname, artist_details.Fname, user_details.Region, P.Name;
 
 
 -- 6) Get the advertiser name whose ads appear in every episode of every podcast
@@ -134,16 +92,12 @@ WHERE NOT EXISTS (
 
 -- 7) Within each genre, calculate the ranking of episodes based on the number of likes it has recieved.
 
-SELECT
-    e.EpisodeID,
-    e.PodcastID,
-    e.Likes,
-    p.Name AS PodcastName,
-    g.Name AS GenreName,
-    ROW_NUMBER() OVER (PARTITION BY g.Name ORDER BY e.Likes DESC) AS episode_rank_in_genre
-FROM
-    S24_S003_T7_EPISODE e
-JOIN
-    S24_S003_T7_PODCAST p ON e.PodcastID = p.PodcastID
-JOIN
-    S24_S003_T7_GENRE g ON p.GID = g.GID;
+SELECT e.EpisodeID,
+       e.PodcastID,
+       e.Likes,
+       p.Name AS PodcastName,
+       g.Name AS GenreName,
+       ROW_NUMBER() OVER (PARTITION BY g.Name ORDER BY e.Likes DESC) AS episode_rank_in_genre
+FROM S24_S003_T7_EPISODE e
+JOIN S24_S003_T7_PODCAST p ON e.PodcastID = p.PodcastID
+JOIN S24_S003_T7_GENRE g ON p.GID = g.GID;

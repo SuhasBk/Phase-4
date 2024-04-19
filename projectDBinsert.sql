@@ -1,3 +1,4 @@
+set define off;
 --Person--
 INSERT INTO S24_S003_T7_PERSON (PID, FName, LName, Email, DOB, Region, Password) VALUES (1, 'John', 'Doe', 'john.doe01@example.com', TO_DATE('1990-01-01', 'YYYY-MM-DD'), 'USA', '01c75773e4eaff9aacc63bebdbc9764d2eee2f9208da16ce74336a0511315d00');
 INSERT INTO S24_S003_T7_PERSON (PID, FName, LName, Email, DOB, Region, Password) VALUES (2, 'Jane', 'Smith', 'jane.smith02@example.com', TO_DATE('1991-02-01', 'YYYY-MM-DD'), 'Canada', '8215f8967eed0ebaad798894a24b35acb70af73f45fc25554833675c8af4ee60');

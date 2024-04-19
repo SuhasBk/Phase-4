@@ -7,7 +7,7 @@ FROM S24_S003_T7_PODCAST p
 JOIN S24_S003_T7_EPISODE e ON p.PodcastID = e.PodcastID
 JOIN S24_S003_T7_GENRE g ON p.GID = g.GID
 WHERE g.Name = 'Technology'
-GROUP BY p.PodcastID, p.Name, p.Subscribers, g.Name
+GROUP BY p.PodcastID, p.Name, g.Name
 HAVING SUM(e.Views) >= 150;
 
 

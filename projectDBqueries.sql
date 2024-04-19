@@ -54,9 +54,9 @@ JOIN S24_S003_T7_GENRE G ON P.GID = G.GID
 GROUP BY CUBE(PR.Region, E.Episode_format, G.Name);
 
 
--- 5) Get the user names, their region, podcast name, total number of listens, total likes and dislikes including totals and subtotals for each of them.
+-- 5) Get the user names, their region, podcast name, total number of listens, total likes and dislikes across artists, user region and podcasts
 
-SELECT user_details.Lname AS UserName,
+SELECT user_details.Lname,
        user_details.Region AS UserRegion,
        P.Name AS PodcastName,
        COUNT(L.UPID) AS TotalListens,
@@ -98,3 +98,58 @@ SELECT e.EpisodeID,
 FROM S24_S003_T7_EPISODE e
 JOIN S24_S003_T7_PODCAST p ON e.PodcastID = p.PodcastID
 JOIN S24_S003_T7_GENRE g ON p.GID = g.GID;
+
+--8) Most listened per country
+
+SELECT p.Region AS Country, SUM(e.End_time - e.Start_time) AS TotalListenedTime
+FROM S24_S003_T7_PERSON p
+JOIN S24_S003_T7_LISTENS_TO e ON p.PID = e.UPID
+GROUP BY p.Region
+ORDER BY TotalListenedTime DESC
+FETCH FIRST 5 ROWS ONLY;
+
+--9) listened MINUTES based on the genre
+
+WITH UserListeningDetails AS (
+    SELECT
+        lt.UPID AS User_ID,
+        p.fname || ' ' || p.lname AS User_Name,
+        g.Name AS Genre_Name,
+        ROUND((SUM(lt.End_time - lt.Start_time) / 60),2) AS Total_Listening_Minutes
+    FROM
+        S24_S003_T7_LISTENS_TO lt
+    JOIN
+        S24_S003_T7_EPISODE e ON lt.EpisodeID = e.EpisodeID AND lt.PodcastID = e.PodcastID
+    JOIN
+        S24_S003_T7_PODCAST pc ON lt.PodcastID = pc.PodcastID
+    JOIN
+        S24_S003_T7_GENRE g ON pc.GID = g.GID
+    JOIN
+        S24_S003_T7_PERSON p ON lt.UPID = p.PID
+    GROUP BY
+        lt.UPID,
+        p.fname || ' ' || p.lname,
+        g.Name
+)
+SELECT
+    User_ID,
+    User_Name,
+    Genre_Name,
+    Total_Listening_Minutes,
+    RANK() OVER (PARTITION BY User_ID ORDER BY Total_Listening_Minutes DESC) AS Listening_Minutes_Rank
+FROM
+    UserListeningDetails
+ORDER BY
+    User_ID,
+    Listening_Minutes_Rank;
+
+--10) Most listened days of the week
+
+SELECT
+    TO_CHAR(Last_Listened_Date, 'DAY') AS Weekday,
+    COUNT(*) AS Listen_Count
+FROM
+    S24_S003_T7_LISTENS_TO
+GROUP BY
+    TO_CHAR(Last_Listened_Date, 'DAY')
+ORDER BY LISTEN_COUNT DESC;

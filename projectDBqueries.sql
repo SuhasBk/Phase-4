@@ -149,7 +149,7 @@ ORDER BY
 
 SELECT
     TO_CHAR(Last_Listened_Date, 'DAY') AS Weekday,
-    COUNT(*) AS Listen_Co
+    COUNT(*) AS Listen_Count
 FROM
     S24_S003_T7_LISTENS_TO
 GROUP BY

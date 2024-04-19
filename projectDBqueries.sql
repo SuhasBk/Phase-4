@@ -54,7 +54,7 @@ JOIN S24_S003_T7_GENRE G ON P.GID = G.GID
 GROUP BY CUBE(PR.Region, E.Episode_format, G.Name);
 
 
--- 5) Get the user names, their region, podcast name, total number of listens, total likes and dislikes across artists, user region and podcasts
+-- 5) Get the user names, their region, podcast name, total number of listens, total likes and dislikes with totals and subtotals for each user, region and podcasts
 
 SELECT user_details.Lname,
        user_details.Region AS UserRegion,
@@ -99,7 +99,9 @@ FROM S24_S003_T7_EPISODE e
 JOIN S24_S003_T7_PODCAST p ON e.PodcastID = p.PodcastID
 JOIN S24_S003_T7_GENRE g ON p.GID = g.GID;
 
---8) Most listened per country
+/* ADDITIONAL BUSINESS GOALS QUERIES */
+
+--8) For each country, get the total listening time in seconds by a user.
 
 SELECT p.Region AS Country, SUM(e.End_time - e.Start_time) AS TotalListenedTime
 FROM S24_S003_T7_PERSON p
@@ -108,7 +110,7 @@ GROUP BY p.Region
 ORDER BY TotalListenedTime DESC
 FETCH FIRST 5 ROWS ONLY;
 
---9) listened MINUTES based on the genre
+--9) For each genre, get the total listening time in minutes by a user and rank the users.
 
 WITH UserListeningDetails AS (
     SELECT
@@ -143,11 +145,11 @@ ORDER BY
     User_ID,
     Listening_Minutes_Rank;
 
---10) Most listened days of the week
+--10) For each day of the week, get the total time spent by the user listening to podcasts and order the results in descending order of the total count.
 
 SELECT
     TO_CHAR(Last_Listened_Date, 'DAY') AS Weekday,
-    COUNT(*) AS Listen_Count
+    COUNT(*) AS Listen_Co
 FROM
     S24_S003_T7_LISTENS_TO
 GROUP BY
